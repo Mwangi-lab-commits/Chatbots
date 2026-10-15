@@ -1,4 +1,5 @@
 import { UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 import SidebarNav from "@/components/admin/SidebarNav";
@@ -11,6 +12,10 @@ export const metadata: Metadata = {
 export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Resource-based authentication check. Clerk redirects signed-out staff
+  // to the sign-in page.
+  await auth.protect();
+
   const staff = await getStaffUser();
 
   return (

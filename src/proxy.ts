@@ -1,18 +1,14 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
 /**
  * Next.js 16 proxy file (the new name for middleware).
  *
- * Protect the staff area. Customers use the public routes without login.
- * Clerk redirects signed-out staff to the sign-in page.
+ * This file runs the Clerk session handling before each request. The staff
+ * pages call `auth.protect()` in `src/app/admin/layout.tsx`. That check is
+ * a resource-based check. It is safer than a path match. See the Clerk
+ * migration guide: "migrate from createRouteMatcher".
  */
-const isProtectedRoute = createRouteMatcher(["/admin(.*)"]);
-
-export default clerkMiddleware(async (auth, request) => {
-  if (isProtectedRoute(request)) {
-    await auth.protect();
-  }
-});
+export default clerkMiddleware();
 
 export const config = {
   matcher: [

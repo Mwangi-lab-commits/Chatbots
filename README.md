@@ -84,7 +84,8 @@ src/app/admin/      Staff pages (dashboard, flagged, feedback, complaints, repor
 src/app/api/        API routes (chat, feedback, escalations, exports)
 src/components/     Reusable interface components
 src/lib/            Core logic (NLP detector, chatbot engine, queries, reports)
-src/proxy.ts        Route protection for the staff area
+src/proxy.ts        Clerk middleware. Runs before each request.
+src/app/admin/layout.tsx  Staff area guard. Calls auth.protect().
 supabase/schema.sql Database schema. Run this file in Supabase.
 .env.example        List of the environment variables
 ```
