@@ -31,7 +31,7 @@ const INTENTS: Intent[] = [
   },
   {
     name: "location",
-    keywords: ["location", "located", "address", "office", "branch", "where"],
+    keywords: ["location", "located", "address", "office", "branch", "headquarters"],
     responses: [
       "Our head office is in Nairobi, Kenya. We also serve customers online, across the country.",
     ],
