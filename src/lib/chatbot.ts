@@ -24,7 +24,7 @@ const INTENTS: Intent[] = [
   },
   {
     name: "hours",
-    keywords: ["hours", "open", "close", "closing", "opening", "weekend"],
+    keywords: ["hours", "open", "close", "closed", "closing", "opening"],
     responses: [
       "Our support desk is open Monday to Friday, from 8:00 to 18:00. Weekend requests are answered on Monday morning.",
     ],
@@ -34,6 +34,27 @@ const INTENTS: Intent[] = [
     keywords: ["location", "located", "address", "office", "branch", "headquarters"],
     responses: [
       "Our head office is in Nairobi, Kenya. We also serve customers online, across the country.",
+    ],
+  },
+  {
+    name: "order",
+    keywords: [
+      "order status",
+      "order number",
+      "order id",
+      "where is my order",
+      "track",
+      "tracking",
+      "track my order",
+      "my order status",
+      "parcel status",
+      "shipment status",
+      "not arrived",
+      "not delivered",
+      "late delivery",
+    ],
+    responses: [
+      "To check your order, open Orders and select the order. You will see the current status and a tracking link. If the status has not changed for 2 days, use the Talk to a human option.",
     ],
   },
   {
