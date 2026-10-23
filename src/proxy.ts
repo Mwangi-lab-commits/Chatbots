@@ -8,7 +8,7 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
  * a resource-based check. It is safer than a path match. See the Clerk
  * migration guide: "migrate from createRouteMatcher".
  */
-export default clerkMiddleware();
+export default clerkMiddleware({ signInUrl: "/sign-in" });
 
 export const config = {
   matcher: [
