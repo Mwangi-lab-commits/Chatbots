@@ -142,12 +142,13 @@ To use a real model, follow these steps.
    ```
 
 10. Restart `npm run dev`.
-11. Add the same two variables in Vercel. Use the "Secret" type for
-    `OPENROUTER_API_KEY` and the "Plain" type for `OPENROUTER_MODEL`.
-    Redeploy the project.
+11. Add the same two variables in Vercel. Mark `OPENROUTER_API_KEY` as a
+    Secret. Redeploy the project.
 
-The default model is `openai/gpt-4o-mini`. To use another model, copy its ID
-from https://openrouter.ai/models into `OPENROUTER_MODEL`.
+The default model is `openai/gpt-4o-mini`. It costs about $0.15 per 1M input
+tokens and $0.60 per 1M output tokens. If the key has no credits, the chatbot
+uses the rule-based replies. To use another model, copy its ID from
+https://openrouter.ai/models into `OPENROUTER_MODEL`.
 
 If the key is missing, the model is unavailable, or the request fails, the
 chatbot uses the rule-based replies. The customer does not see an error. The
