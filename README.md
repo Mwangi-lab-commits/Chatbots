@@ -92,8 +92,9 @@ supabase/schema.sql Database schema. Run this file in Supabase.
 
 ## 6. Environment variables
 
-The system needs four environment variables. Keep them in `.env.local` for
-local use. Add the same variables in Vercel for the deployment.
+The system needs four required environment variables. Keep them in
+`.env.local` for local use. Add the same variables in Vercel for the
+deployment.
 
 | Variable | Example | Where used |
 |----------|---------|------------|
@@ -101,6 +102,16 @@ local use. Add the same variables in Vercel for the deployment.
 | `CLERK_SECRET_KEY` | `sk_test_...` | Server only. Clerk backend key. |
 | `SUPABASE_URL` | `https://abcd.supabase.co` | Server only. Database address. |
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGci...` | Server only. Database full-access key. |
+
+You can also set these four optional Clerk route values. The defaults are
+shown here.
+
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/sign-in` | Staff sign-in page. |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/sign-up` | Staff sign-up page. |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | `/admin` | Page after sign-in. |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | `/admin` | Page after sign-up. |
 
 Warning: the service role key bypasses all database security rules. Never put
 this key in client code. Never use the `NEXT_PUBLIC_` prefix for it.
