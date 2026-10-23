@@ -9,7 +9,7 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODEL = "openai/gpt-4o-mini";
 const MAX_HISTORY_MESSAGES = 10;
 const MAX_REPLY_LENGTH = 2000;
-const REQUEST_TIMEOUT_MS = 20_000;
+const REQUEST_TIMEOUT_MS = 10_000;
 
 type ChatRole = "system" | "user" | "assistant";
 

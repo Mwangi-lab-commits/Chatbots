@@ -7,6 +7,9 @@ import type { ErrorFlag, Feedback, Message } from "@/lib/types";
 
 const MAX_MESSAGE_LENGTH = 1000;
 
+// Allow time for the OpenRouter request plus the database writes.
+export const maxDuration = 30;
+
 interface ChatMessagePayload extends Message {
   flags: ErrorFlag[];
   feedback: Feedback | null;

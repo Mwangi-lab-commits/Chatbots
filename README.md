@@ -150,7 +150,8 @@ The default model is `openai/gpt-4o-mini`. To use another model, copy its ID
 from https://openrouter.ai/models into `OPENROUTER_MODEL`.
 
 If the key is missing, the model is unavailable, or the request fails, the
-chatbot uses the rule-based replies. The customer does not see an error.
+chatbot uses the rule-based replies. The customer does not see an error. The
+OpenRouter request has a 10-second timeout.
 
 Warning: `OPENROUTER_API_KEY` is a server secret. Never use the
 `NEXT_PUBLIC_` prefix. Never commit `.env.local`.
