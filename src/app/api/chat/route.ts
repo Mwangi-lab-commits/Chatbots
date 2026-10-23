@@ -150,7 +150,7 @@ export async function POST(request: Request) {
       sender: m.sender,
       content: m.content,
     }));
-    const botText = generateBotReply(message, historyForBot);
+    const botText = await generateBotReply(message, historyForBot);
     const previousBotTexts = messages
       .filter((m) => m.sender === "Bot")
       .map((m) => m.content);

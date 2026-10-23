@@ -1,11 +1,34 @@
 /**
- * Demo support chatbot.
+ * Customer support chatbot.
  *
- * The design document treats the AI chatbot as an external component.
- * This rule-based engine replaces it for the demonstration. To use a real
- * chatbot, replace the body of generateBotReply with a call to that service.
- * Keep the same return type: a plain text reply.
+ * OpenRouter supplies the reply when OPENROUTER_API_KEY is set.
+ * If the key is missing or the request fails, the rule-based replies below
+ * keep the demo working. The public function is generateBotReply().
  */
+
+import { generateOpenRouterReply } from "./openrouter";
+
+const SYSTEM_PROMPT = `You are the customer support assistant for a demo online store.
+
+Rules:
+- Reply in clear, simple English.
+- Use plain text only. Do not use markdown.
+- Keep the reply to 2 to 4 short sentences.
+- Use only the facts below.
+- Do not invent order status, delivery dates, account details, or payment details.
+- If the customer asks about a specific order or account, tell them to open Orders or use the "Talk to a human" option.
+- Never ask for a password, card number, or M-Pesa PIN.
+- You are an automated assistant. Do not claim to be a human.
+- If you cannot solve the problem, offer the "Talk to a human" option.
+
+Facts:
+- Support hours: Monday to Friday, 08:00 to 18:00. Weekend requests are answered on Monday morning.
+- Head office: Nairobi, Kenya. The store serves customers online across the country.
+- Delivery: standard delivery takes 2 to 4 business days. Express delivery takes 1 business day. A tracking link is sent by SMS.
+- Refunds: request a refund within 14 days of purchase. Refunds are processed in 5 to 7 business days.
+- Payments: M-Pesa, debit cards, and credit cards. Payments are secured with bank-level encryption.
+- Cancellation: cancel an order before it ships.
+- Account: open Settings and select Profile. If you cannot log in, select Forgot password on the login page.`;
 
 interface Intent {
   name: string;
@@ -149,10 +172,10 @@ function pick(list: string[]): string {
 let replyCounter = 0;
 
 /**
- * Generate the chatbot reply for a customer message.
- * history is the full list of earlier messages, oldest first.
+ * Generate a reply with the built-in rule engine.
+ * This is the fallback when OpenRouter is not configured or fails.
  */
-export function generateBotReply(
+function generateRuleReply(
   customerMessage: string,
   history: { sender: string; content: string }[],
 ): string {
@@ -178,4 +201,22 @@ export function generateBotReply(
   }
 
   return pick(FALLBACK_RESPONSES);
+}
+
+/**
+ * Generate the chatbot reply for a customer message.
+ * Uses OpenRouter when configured, then falls back to the rule engine.
+ * history is the full list of earlier messages, oldest first.
+ */
+export async function generateBotReply(
+  customerMessage: string,
+  history: { sender: string; content: string }[],
+): Promise<string> {
+  const aiReply = await generateOpenRouterReply(
+    SYSTEM_PROMPT,
+    customerMessage,
+    history,
+  );
+  if (aiReply) return aiReply;
+  return generateRuleReply(customerMessage, history);
 }

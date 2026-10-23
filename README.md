@@ -33,7 +33,8 @@ The system has eight screens. All screens from the design document are built.
 1. The customer opens `/chat` and sends a message.
 2. The server creates an anonymous session and a session code. No personal
    data is stored.
-3. The demo chatbot generates a reply.
+3. The chatbot generates a reply. When `OPENROUTER_API_KEY` is set, the
+   reply comes from OpenRouter. Otherwise, the built-in rule engine replies.
 4. The NLP error detector analyses the reply and saves any flags.
 5. The customer rates the reply with stars, adds a comment, or escalates the
    problem to a human agent.
@@ -70,6 +71,7 @@ You can change the thresholds in `src/lib/constants.ts`.
 | Next.js 16 (App Router) | Frontend pages, server pages, API routes and server actions |
 | Clerk | Staff authentication and staff user list |
 | Supabase (PostgreSQL) | All data storage |
+| OpenRouter | Optional AI replies. The rule engine is the fallback. |
 | Tailwind CSS | Styling |
 | Recharts | Charts on the dashboard and the reports |
 | Vercel | Hosting |
@@ -83,7 +85,7 @@ src/app/status/     Ticket status page
 src/app/admin/      Staff pages (dashboard, flagged, feedback, complaints, reports)
 src/app/api/        API routes (chat, feedback, escalations, exports)
 src/components/     Reusable interface components
-src/lib/            Core logic (NLP detector, chatbot engine, queries, reports)
+src/lib/            Core logic (NLP detector, chatbot engine, OpenRouter client, queries, reports)
 src/proxy.ts        Clerk middleware. Runs before each request.
 src/app/admin/layout.tsx  Staff area guard. Calls auth.protect().
 supabase/schema.sql Database schema. Run this file in Supabase.
@@ -96,12 +98,17 @@ The system needs four required environment variables. Keep them in
 `.env.local` for local use. Add the same variables in Vercel for the
 deployment.
 
+The AI chatbot also uses two optional OpenRouter variables. Without them, the
+chatbot uses the rule-based demo replies.
+
 | Variable | Example | Where used |
 |----------|---------|------------|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | `pk_test_...` | Browser and server. Clerk frontend key. |
 | `CLERK_SECRET_KEY` | `sk_test_...` | Server only. Clerk backend key. |
 | `SUPABASE_URL` | `https://abcd.supabase.co` | Server only. Database address. |
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGci...` | Server only. Database full-access key. |
+| `OPENROUTER_API_KEY` | `sk-or-v1-...` | Server only. Optional. Enables AI replies. |
+| `OPENROUTER_MODEL` | `openai/gpt-4o-mini` | Server only. Optional. Model ID. |
 
 You can also set these four optional Clerk route values. The defaults are
 shown here.
@@ -112,6 +119,41 @@ shown here.
 | `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/sign-up` | Staff sign-up page. |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | `/admin` | Page after sign-in. |
 | `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | `/admin` | Page after sign-up. |
+
+### Optional: connect the OpenRouter chatbot
+
+The chatbot works without OpenRouter. It uses the rule-based demo replies.
+To use a real model, follow these steps.
+
+1. Open https://openrouter.ai in your browser.
+2. Sign in. You can use Google, GitHub or an email address.
+3. Open https://openrouter.ai/keys.
+4. Select "Create Key".
+5. Enter a name, for example `chatbot-monitor`.
+6. Optional: set a credit limit for this key.
+7. Select "Create". Copy the key. The key starts with `sk-or-v1-`.
+8. Add credits at https://openrouter.ai/settings/credits, or choose a free
+   model. OpenRouter charges for each token.
+9. Put the key in `.env.local`:
+
+   ```dotenv
+   OPENROUTER_API_KEY=sk-or-v1-...
+   OPENROUTER_MODEL=openai/gpt-4o-mini
+   ```
+
+10. Restart `npm run dev`.
+11. Add the same two variables in Vercel. Use the "Secret" type for
+    `OPENROUTER_API_KEY` and the "Plain" type for `OPENROUTER_MODEL`.
+    Redeploy the project.
+
+The default model is `openai/gpt-4o-mini`. To use another model, copy its ID
+from https://openrouter.ai/models into `OPENROUTER_MODEL`.
+
+If the key is missing, the model is unavailable, or the request fails, the
+chatbot uses the rule-based replies. The customer does not see an error.
+
+Warning: `OPENROUTER_API_KEY` is a server secret. Never use the
+`NEXT_PUBLIC_` prefix. Never commit `.env.local`.
 
 Warning: the service role key bypasses all database security rules. Never put
 this key in client code. Never use the `NEXT_PUBLIC_` prefix for it.
@@ -182,7 +224,8 @@ role key has access.
    npm.
 2. Open a terminal in the project folder.
 3. Copy the file `.env.example` to `.env.local`.
-4. Fill the four values in `.env.local`. Use the values from sections 7 and 8.
+4. Fill the four required values in `.env.local`. Use the values from sections
+   7 and 8. Add the OpenRouter values from section 6 if you want AI replies.
 5. Run `npm install`. Wait for the download.
 6. Run `npm run dev`.
 7. Open http://localhost:3000 in your browser.
@@ -211,8 +254,9 @@ role key has access.
 5. Select "Import" next to the Chatbots repository. Allow access when Vercel
    asks.
 6. Keep the framework preset "Next.js". Vercel detects it automatically.
-7. Open "Environment Variables". Add the four variables from section 6. Use
-   the same names and values as `.env.local`.
+7. Open "Environment Variables". Add the four required variables from section
+   6. Add the two OpenRouter variables if you use AI replies. Use the same
+   names and values as `.env.local`.
 8. Select "Deploy". Wait for the build.
 9. Open the project address, for example `https://chatbots-xyz.vercel.app`.
 10. Test the customer flow and the staff flow on the live address.
@@ -232,7 +276,7 @@ and why the function is still complete.
 | Roles live in Clerk public metadata | No synchronization job and no webhook are necessary. |
 | One star rating per reply | The feedback screen derives "helpful" (4 or 5 stars) and "not helpful" (1 or 2 stars) from the rating. |
 | PDF export uses the browser print dialog | No heavy PDF library is necessary on the server. |
-| The demo chatbot is a small rule engine | The design document calls the chatbot an external component. Replace the body of `generateBotReply` in `src/lib/chatbot.ts` to connect a real chatbot. |
+| The rule engine is the fallback | OpenRouter supplies real replies when `OPENROUTER_API_KEY` is set. The rule engine keeps the demo working without a key or when the API fails. |
 | Charts aggregate in the server code | Simple queries with no extra database views or functions. |
 | Lists limit to 200 rows | The screens stay fast. The CSV export contains the full data. |
 
@@ -245,6 +289,9 @@ and why the function is still complete.
 - The customer flow stores no personal data. The system follows the Data
   Protection Act, 2019 (Kenya).
 - Never commit `.env.local`. The file `.gitignore` excludes it.
+- The OpenRouter key stays on the server. The browser never sees it. Set a
+  credit limit and monitor usage. The public chat endpoint can be called
+  without login.
 - The ticket status lookup returns safe fields only: ticket number, reason,
   status, agent name and dates.
 
