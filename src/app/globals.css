@@ -9,6 +9,13 @@ body {
   color: #0f172a;
 }
 
+/* Let the Clerk card fit the width of its container on small screens. */
+.cl-rootBox,
+.cl-cardBox,
+.cl-card {
+  width: 100% !important;
+}
+
 /* Print one report only. Hide the rest of the page. */
 @media print {
   body * {
