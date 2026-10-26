@@ -30,14 +30,16 @@ The system has eight screens. All screens from the design document are built.
 
 ### Customer side (no login)
 
-1. The customer opens `/chat` and sends a message.
-2. The server creates an anonymous session and a session code. No personal
-   data is stored.
+1. The customer opens `/chat`. The customer can send a message or ask for a
+   human agent.
+2. The server creates an anonymous session and a session code on the first
+   message or on the first escalation. No personal data is stored.
 3. The chatbot generates a reply. When `OPENROUTER_API_KEY` is set, the
    reply comes from OpenRouter. Otherwise, the built-in rule engine replies.
 4. The NLP error detector analyses the reply and saves any flags.
-5. The customer rates the reply with stars, adds a comment, or escalates the
-   problem to a human agent.
+5. The customer rates the reply with stars, adds a comment, or asks for a
+   human agent. The "Talk to a human" action is also available before the
+   first message and after a rating.
 6. The customer checks the ticket status on `/status` with the ticket number.
 
 ### Detection rules
@@ -235,7 +237,8 @@ role key has access.
    opening hours?".
 9. Rate the reply. Select "Helpful" or "Not helpful", or select a star.
 10. Select "Talk to a human". Complete the form. The system shows a ticket
-    number, for example `TKT-4RMX8P2K`.
+    number, for example `TKT-4RMX8P2K`. You can also select "Talk to a human"
+    before the first message or after a rating.
 11. Open `/status`. Enter the ticket number. The system shows the ticket
     status.
 12. Sign in as staff on `/sign-in`. Use a staff user from section 8.
@@ -308,7 +311,10 @@ from the design document.
 - [ ] An unknown question produces a "Misinterpreted" flag.
 - [ ] A repeated bot reply produces a "Repetitive" flag.
 - [ ] A repeated customer question flags the previous bot reply.
+- [ ] The customer asks for a human before the first message. The system
+      creates a session and a ticket.
 - [ ] The customer creates an escalation and receives a ticket number.
+- [ ] The "Talk to a human" action stays visible after a rating.
 - [ ] The ticket status page shows the current status.
 - [ ] The dashboard shows correct totals and charts.
 - [ ] The flagged list filters by date, error type and search text.

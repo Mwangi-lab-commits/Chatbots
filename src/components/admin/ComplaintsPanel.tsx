@@ -141,7 +141,7 @@ export default function ComplaintsPanel({
           {selected.description && (
             <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
               <p className="text-xs font-medium text-slate-500">
-                Customer complaint
+                Customer message
               </p>
               <p className="mt-1">{selected.description}</p>
             </div>

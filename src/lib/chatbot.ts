@@ -119,7 +119,7 @@ const INTENTS: Intent[] = [
     name: "human",
     keywords: ["human", "agent", "person", "representative", "staff", "talk to someone"],
     responses: [
-      "I can connect you to a human agent. Use the Talk to a human option in the side panel. Please describe your problem there.",
+      "I can connect you to a human agent. Use the Talk to a human option on the chat page. Please describe your feedback or problem there.",
     ],
   },
   {

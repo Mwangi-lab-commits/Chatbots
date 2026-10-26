@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { newTicketCode } from "@/lib/codes";
+import { newSessionCode, newTicketCode } from "@/lib/codes";
 import { getSupabase } from "@/lib/supabase";
 import type { EscalationReason } from "@/lib/types";
 
@@ -14,8 +14,9 @@ const MAX_DESCRIPTION_LENGTH = 1000;
 
 /**
  * POST /api/escalations
- * Body: { sessionCode: string, reason: string, description: string }
- * Create an escalation ticket for the active conversation.
+ * Body: { sessionCode?: string, reason: string, description: string }
+ * Create an escalation ticket and the chat session if it does not exist yet.
+ * This lets a customer ask for a human agent before the first chatbot reply.
  */
 export async function POST(request: Request) {
   let body: { sessionCode?: string; reason?: string; description?: string };
@@ -25,13 +26,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const sessionCode = body.sessionCode?.trim();
+  const requestedSessionCode = body.sessionCode?.trim();
   const reason = body.reason as EscalationReason | undefined;
   const description = (body.description ?? "").trim();
 
-  if (!sessionCode) {
-    return NextResponse.json({ error: "sessionCode is required." }, { status: 400 });
-  }
   if (!reason || !REASONS.includes(reason)) {
     return NextResponse.json(
       { error: `The reason must be one of: ${REASONS.join(", ")}.` },
@@ -47,34 +45,55 @@ export async function POST(request: Request) {
 
   try {
     const supabase = getSupabase();
-    const { data: customer } = await supabase
-      .from("customers")
-      .select("id")
-      .eq("anon_code", sessionCode)
-      .maybeSingle();
-    if (!customer) {
-      return NextResponse.json({ error: "Session not found." }, { status: 404 });
+    let customerId: string;
+    let sessionCode = requestedSessionCode;
+
+    if (sessionCode) {
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("id")
+        .eq("anon_code", sessionCode)
+        .maybeSingle();
+      if (!customer) {
+        return NextResponse.json({ error: "Session not found." }, { status: 404 });
+      }
+      customerId = customer.id;
+    } else {
+      sessionCode = newSessionCode();
+      const { data: customer, error } = await supabase
+        .from("customers")
+        .insert({ anon_code: sessionCode })
+        .select("id")
+        .single();
+      if (error) throw error;
+      customerId = customer.id;
     }
 
-    const { data: conversation } = await supabase
+    const { data: existingConversation } = await supabase
       .from("conversations")
       .select("id")
-      .eq("customer_id", customer.id)
+      .eq("customer_id", customerId)
+      .eq("status", "Active")
       .order("start_time", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!conversation) {
-      return NextResponse.json(
-        { error: "The session has no conversation to escalate." },
-        { status: 404 },
-      );
+
+    let conversationId = existingConversation?.id;
+    if (!conversationId) {
+      const { data: conversation, error } = await supabase
+        .from("conversations")
+        .insert({ customer_id: customerId })
+        .select("id")
+        .single();
+      if (error) throw error;
+      conversationId = conversation.id;
     }
 
     const { data: escalation, error } = await supabase
       .from("escalations")
       .insert({
         ticket_code: newTicketCode(),
-        conversation_id: conversation.id,
+        conversation_id: conversationId,
         reason,
         description,
       })
@@ -82,7 +101,7 @@ export async function POST(request: Request) {
       .single();
     if (error) throw error;
 
-    return NextResponse.json({ escalation });
+    return NextResponse.json({ escalation, sessionCode });
   } catch (error) {
     console.error("POST /api/escalations failed:", error);
     return NextResponse.json(

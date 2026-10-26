@@ -38,6 +38,8 @@ export default function ChatWindow() {
     useState<EscalationReason>("Irrelevant response");
   const [escalateDescription, setEscalateDescription] = useState("");
   const [escalateBusy, setEscalateBusy] = useState(false);
+  const [escalateError, setEscalateError] = useState<string | null>(null);
+  const [escalateSent, setEscalateSent] = useState(false);
   const [ticket, setTicket] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -149,31 +151,41 @@ export default function ChatWindow() {
     }
   }
 
+  function openEscalation() {
+    setEscalateError(null);
+    setEscalateSent(false);
+    setEscalateOpen(true);
+  }
+
   async function submitEscalation() {
-    if (!sessionCode) return;
     setEscalateBusy(true);
-    setError(null);
+    setEscalateError(null);
     try {
       const response = await fetch("/api/escalations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sessionCode,
+          sessionCode: sessionCode ?? undefined,
           reason: escalateReason,
           description: escalateDescription,
         }),
       });
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error ?? "The ticket could not be created.");
-        setEscalateOpen(false);
+        setEscalateError(data.error ?? "The ticket could not be created.");
         return;
+      }
+      if (data.sessionCode) {
+        setSessionCode(data.sessionCode);
+        window.localStorage.setItem(STORAGE_KEY, data.sessionCode);
       }
       setTicket(data.escalation.ticket_code);
       setEscalateDescription("");
+      setEscalateSent(true);
     } catch {
-      setError("The ticket could not be created. Check your connection.");
-      setEscalateOpen(false);
+      setEscalateError(
+        "The ticket could not be created. Check your connection.",
+      );
     } finally {
       setEscalateBusy(false);
     }
@@ -199,10 +211,13 @@ export default function ChatWindow() {
     setDraft("");
     setTicket(null);
     setError(null);
+    setEscalateOpen(false);
+    setEscalateError(null);
+    setEscalateSent(false);
     window.localStorage.removeItem(STORAGE_KEY);
   }
 
-  const canEscalate = messages.some((message) => message.sender === "Customer");
+  const hasSession = Boolean(sessionCode);
 
   return (
     <div className="flex h-screen flex-col lg:flex-row">
@@ -267,7 +282,7 @@ export default function ChatWindow() {
                       setCommentFor(null);
                       setCommentDraft("");
                     }}
-                    onEscalate={() => setEscalateOpen(true)}
+                    onEscalate={openEscalation}
                   />
                 </div>
               </div>
@@ -291,6 +306,18 @@ export default function ChatWindow() {
         )}
 
         <div className="border-t border-slate-200 bg-white px-5 py-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-slate-500">
+              Need a person? Share feedback or ask for help.
+            </p>
+            <button
+              type="button"
+              onClick={openEscalation}
+              className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:border-indigo-300 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+            >
+              Talk to a human
+            </button>
+          </div>
           <div className="flex items-end gap-3">
             <textarea
               value={draft}
@@ -330,9 +357,8 @@ export default function ChatWindow() {
         <div className="space-y-2">
           <button
             type="button"
-            onClick={() => setEscalateOpen(true)}
-            disabled={!canEscalate}
-            className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={openEscalation}
+            className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
           >
             Talk to a human
           </button>
@@ -352,7 +378,7 @@ export default function ChatWindow() {
           <button
             type="button"
             onClick={() => void endSession()}
-            disabled={!canEscalate}
+            disabled={!hasSession}
             className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             End session
@@ -382,77 +408,149 @@ export default function ChatWindow() {
         </div>
       </aside>
 
-      {/* Escalation dialog */}
+      {/* Human handoff dialog */}
       {escalateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Escalate to a human agent
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Chat reference:{" "}
-              <span className="font-mono">{sessionCode ?? "-"}</span>
-            </p>
-            <div className="mt-4 space-y-4">
+          <div
+            aria-labelledby="escalate-title"
+            aria-modal="true"
+            className="max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+            role="dialog"
+          >
+            {escalateSent ? (
               <div>
-                <label
-                  htmlFor="escalate-reason"
-                  className="block text-sm font-medium text-slate-700"
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                  <svg
+                    aria-hidden="true"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="m20 6-11 11-5-5" />
+                  </svg>
+                </div>
+                <h2
+                  id="escalate-title"
+                  className="mt-4 text-lg font-semibold text-slate-900"
                 >
-                  Reason
-                </label>
-                <select
-                  id="escalate-reason"
-                  value={escalateReason}
-                  onChange={(event) =>
-                    setEscalateReason(event.target.value as EscalationReason)
-                  }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-                >
-                  {REASONS.map((reason) => (
-                    <option key={reason} value={reason}>
-                      {reason}
-                    </option>
-                  ))}
-                </select>
+                  Request sent
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  A human agent will review your message. Save the ticket code
+                  to check the status.
+                </p>
+                <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 font-mono text-lg text-slate-900">
+                  {ticket}
+                </p>
+                <div className="mt-5 flex flex-wrap items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEscalateOpen(false)}
+                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Close
+                  </button>
+                  <Link
+                    href="/status"
+                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                  >
+                    Check ticket status
+                  </Link>
+                </div>
               </div>
-              <div>
-                <label
-                  htmlFor="escalate-description"
-                  className="block text-sm font-medium text-slate-700"
+            ) : (
+              <>
+                <h2
+                  id="escalate-title"
+                  className="text-lg font-semibold text-slate-900"
                 >
-                  Describe the problem
-                </label>
-                <textarea
-                  id="escalate-description"
-                  value={escalateDescription}
-                  onChange={(event) =>
-                    setEscalateDescription(event.target.value)
-                  }
-                  rows={4}
-                  maxLength={1000}
-                  placeholder="Explain what went wrong with the chatbot reply."
-                  className="mt-1 w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-                />
-              </div>
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setEscalateOpen(false)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void submitEscalation()}
-                  disabled={escalateBusy || escalateDescription.trim().length === 0}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {escalateBusy ? "Submitting..." : "Submit request"}
-                </button>
-              </div>
-            </div>
+                  Talk to a human agent
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Share feedback or describe the problem. A human agent will
+                  review your message.
+                </p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Chat reference:{" "}
+                  <span className="font-mono">
+                    {sessionCode ?? "New session"}
+                  </span>
+                </p>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label
+                      htmlFor="escalate-reason"
+                      className="block text-sm font-medium text-slate-700"
+                    >
+                      Reason
+                    </label>
+                    <select
+                      id="escalate-reason"
+                      value={escalateReason}
+                      onChange={(event) =>
+                        setEscalateReason(
+                          event.target.value as EscalationReason,
+                        )
+                      }
+                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                    >
+                      {REASONS.map((reason) => (
+                        <option key={reason} value={reason}>
+                          {reason}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="escalate-description"
+                      className="block text-sm font-medium text-slate-700"
+                    >
+                      Your feedback or problem
+                    </label>
+                    <textarea
+                      id="escalate-description"
+                      value={escalateDescription}
+                      onChange={(event) =>
+                        setEscalateDescription(event.target.value)
+                      }
+                      rows={4}
+                      maxLength={1000}
+                      placeholder="Tell the agent what happened, or what feedback you want to share."
+                      className="mt-1 w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                  {escalateError && (
+                    <p className="text-sm text-red-600" role="alert">
+                      {escalateError}
+                    </p>
+                  )}
+                  <div className="flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEscalateOpen(false)}
+                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void submitEscalation()}
+                      disabled={
+                        escalateBusy || escalateDescription.trim().length === 0
+                      }
+                      className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {escalateBusy ? "Sending..." : "Send request"}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -460,7 +558,7 @@ export default function ChatWindow() {
   );
 }
 
-/** Rating and escalation actions below one chatbot reply. */
+/** Rating and human handoff actions below one chatbot reply. */
 function BotFeedback(props: {
   message: ChatMessageView;
   busy: boolean;
@@ -517,7 +615,7 @@ function BotFeedback(props: {
             onClick={props.onEscalate}
             className="rounded-full border border-slate-200 bg-white px-2.5 py-1 hover:border-indigo-300 hover:text-indigo-700"
           >
-            Escalate
+            Talk to a human
           </button>
         </div>
       ) : (
@@ -534,15 +632,6 @@ function BotFeedback(props: {
             <p className="mt-0.5 italic text-slate-400">
               Comment: {feedback.comment}
             </p>
-          )}
-          {!commentOpen && !feedback.comment && (
-            <button
-              type="button"
-              onClick={props.onOpenComment}
-              className="mt-1 text-indigo-600 hover:text-indigo-500"
-            >
-              Add a comment
-            </button>
           )}
           {commentOpen && (
             <div className="mt-1.5 flex items-center gap-2">
@@ -571,6 +660,24 @@ function BotFeedback(props: {
               </button>
             </div>
           )}
+          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+            {!commentOpen && !feedback.comment && (
+              <button
+                type="button"
+                onClick={props.onOpenComment}
+                className="font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                Add a comment
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={props.onEscalate}
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              Talk to a human
+            </button>
+          </div>
         </div>
       )}
     </div>
