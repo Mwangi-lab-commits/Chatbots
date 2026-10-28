@@ -64,7 +64,7 @@ You can change the thresholds in `src/lib/constants.ts`.
 - The dashboard shows total conversations, error counts, the average
   satisfaction, open escalations, error trends and recent activity.
 - Staff review flagged replies, assign agents to tickets, update ticket
-  status, record resolution notes and export reports.
+  status, send feedback to the customer and export reports.
 
 ## 4. Technology
 
@@ -298,7 +298,7 @@ and why the function is still complete.
   credit limit and monitor usage. The public chat endpoint can be called
   without login.
 - The ticket status lookup returns safe fields only: ticket number, reason,
-  status, agent name and dates.
+  status, agent name, agent feedback and dates.
 
 ## 13. Test checklist
 
@@ -320,7 +320,7 @@ from the design document.
 - [ ] The flagged list filters by date, error type and search text.
 - [ ] The conversation review shows the full exchange with flags.
 - [ ] Staff assign an agent and resolve a ticket. The status page shows
-      "Resolved".
+      "Resolved" and the agent's feedback.
 - [ ] The reports screen generates all four report types.
 - [ ] The CSV export downloads a file with the full data.
 - [ ] The print dialog saves a report as PDF.

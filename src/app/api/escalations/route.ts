@@ -125,7 +125,9 @@ export async function GET(request: Request) {
     const supabase = getSupabase();
     const { data: escalation } = await supabase
       .from("escalations")
-      .select("ticket_code, reason, status, assigned_to_name, created_at, resolved_at")
+      .select(
+        "ticket_code, reason, status, assigned_to_name, resolution_note, created_at, resolved_at",
+      )
       .eq("ticket_code", ticket.toUpperCase())
       .maybeSingle();
     if (!escalation) {

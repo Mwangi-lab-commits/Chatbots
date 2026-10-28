@@ -202,14 +202,14 @@ export default function ComplaintsPanel({
                 htmlFor="resolution_note"
                 className="block text-sm font-medium text-slate-700"
               >
-                Resolution note
+                Feedback to customer
               </label>
               <textarea
                 id="resolution_note"
                 name="resolution_note"
                 rows={3}
                 defaultValue={selected.resolution_note ?? ""}
-                placeholder="Describe how the issue was resolved."
+                placeholder="Explain the resolution or reply to the customer."
                 className="mt-1 w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm"
               />
             </div>

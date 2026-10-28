@@ -9,6 +9,7 @@ interface TicketStatus {
   reason: string;
   status: EscalationStatus;
   assigned_to_name: string | null;
+  resolution_note: string | null;
   created_at: string;
   resolved_at: string | null;
 }
@@ -123,6 +124,16 @@ export default function StatusChecker() {
                 {result.assigned_to_name ?? "Not assigned yet"}
               </dd>
             </div>
+            {result.resolution_note && (
+              <div className="rounded-xl bg-indigo-50 p-3">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                  Agent feedback
+                </dt>
+                <dd className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                  {result.resolution_note}
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between gap-4">
               <dt className="text-slate-500">Submitted</dt>
               <dd className="text-right font-medium text-slate-800">
