@@ -147,7 +147,11 @@ export default function ComplaintsPanel({
             </div>
           )}
 
-          <form action={updateEscalation} className="mt-5 space-y-4">
+          <form
+            key={selected.id}
+            action={updateEscalation}
+            className="mt-5 space-y-4"
+          >
             <input
               type="hidden"
               name="escalation_id"

@@ -27,7 +27,7 @@ export default async function ComplaintsPage({
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           Escalation tickets raised by customers. Assign an agent, update the
-          status and record a resolution note.
+          status and send feedback to the customer.
         </p>
       </div>
 
