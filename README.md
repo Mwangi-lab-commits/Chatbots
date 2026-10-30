@@ -54,7 +54,10 @@ The detector uses three rules. The rules come from the design document.
 | Re-ask | The customer repeats the last question (similarity 0.80 or more) | Misinterpreted (sets the previous bot reply) |
 
 A reply can raise more than one flag. Every flag stores a confidence score
-between 0.00 and 1.00.
+between 0.00 and 1.00. Greetings, short acknowledgements, identity questions
+and capability questions are not judged by the relevance rule, because they
+contain too few content words for a cosine comparison. The reply is still
+checked for repetition and fallback phrases.
 
 You can change the thresholds in `src/lib/constants.ts`.
 

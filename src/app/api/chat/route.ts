@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateBotReply } from "@/lib/chatbot";
 import { newSessionCode } from "@/lib/codes";
-import { detectErrors, isReask, reaskSimilarity } from "@/lib/nlp";
+import { detectErrors, isReask, isSubstantiveMessage, reaskSimilarity } from "@/lib/nlp";
 import { getSupabase } from "@/lib/supabase";
 import type { ErrorFlag, Feedback, Message } from "@/lib/types";
 
@@ -108,7 +108,10 @@ export async function POST(request: Request) {
     const lastCustomerMessage = customerMessages[customerMessages.length - 1];
     if (lastCustomerMessage) {
       const similarity = reaskSimilarity(message, lastCustomerMessage.content);
-      if (isReask(similarity)) {
+      if (
+        isReask(similarity) &&
+        isSubstantiveMessage(lastCustomerMessage.content)
+      ) {
         const lastIndex = messages.findIndex(
           (m) => m.id === lastCustomerMessage.id,
         );
